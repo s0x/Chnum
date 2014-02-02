@@ -2,24 +2,28 @@
 #
 #
 
-files=(
-  "http://apache.imsam.info/hadoop/common/stable/hadoop-2.2.0.tar.gz"
+VERSION="2.2.0"
+
+FILES=(
+  "http://apache.imsam.info/hadoop/common/stable/${PACKAGE}-${VERSION}.tar.gz"
 )
 
-md5=(
+MD5=(
   "25f27eb0b5617e47c032319c0bfd9962"
 )
 
-sha1=(
+SHA1=(
   "7339da348d9b4a813b1b1d8b6982f3f8755329e4"
 )
 
+unpack() {
+  env_try "tar -xzf ${ARCHIVE}" || return 1
+}
+
 setup() {
-  env_begin "Installing hadoop"
-
-  tar -xzf hadoop-2.2.0.tar.gz
-
-  env_end
+  cd ${PACKAGE}-${VERSION}
+  mkdir -p ${DESTDIR}/usr/local/hadoop
+  env_try "cp -a . ${DESTDIR}/usr/local/hadoop" || return 1
 }
 
 clean() {

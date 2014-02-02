@@ -36,9 +36,20 @@ check-files() {
   return 0;
 }
 
+fn_exists() {
+  type $1 | grep -q 'shell function'
+}
+
 setup-env () {
   log_info "Seting-Up Fake Environment ..."
   for service in $(ls $SETUP_DIR); do
+    # Setup variables
+    PACKAGE=$service
+    DISTDIR=$PKG_DIR/$PACKAGE
+    WORKDIR=$TMP_DIR/${PACKAGE}/work
+    DESTDIR=$TMP_DIR/${PACKAGE}/image
+    ARCHIVE=()
+
     include $CFG_DIR/${service}.conf
     if ! include $SETUP_DIR/${service}/${service}.setup; then
       log_error "${service} skipped. The file ${service}.setup was not found."
@@ -46,21 +57,21 @@ setup-env () {
     fi
 
     # create package directory
-    mkdir -p $PKG_DIR/$service
+    mkdir -p $DISTDIR
 
     # fetch all needed files
     if ! (
-      cd $PKG_DIR/$service
+      cd $DISTDIR
 
-      for idx in "${!files[@]}"; do
-        file=`basename ${files[$idx]}`
+      for idx in "${!FILES[@]}"; do
+        file=`basename ${FILES[$idx]}`
 
         while true; do
 
           # Download file
           while [ ! -f $file ]; do
-            echo "Downloading ${files[$idx]} ..."
-            if ! wget ${files[$idx]}; then
+            log_item "Downloading ${FILES[$idx]} ..."
+            if ! wget ${FILES[$idx]}; then
               log_error "ERROR: Downloading ${file} failed."
               if confirm "Retry?"; then
                 continue
@@ -74,10 +85,10 @@ setup-env () {
           # Checking File
           [ -f $file ] || return 1
           log_item "Checking checksums ..."
-          if [[ -z $md5[$idx] || -z $sha1[$idx] ]]; then
+          if [[ -z $MD5[$idx] || -z $SHA1[$idx] ]]; then
             log_warn "WARNING: md5 and sha1 should be provided to prevent using corrupted or manipulated files"
           fi
-          if ! check-files $file ${md5[$idx]} ${sha1[$idx]}; then
+          if ! check-files $file ${MD5[$idx]} ${SHA1[$idx]}; then
             if confirm "Retry downloading the file ${file}?"; then
               rm $file
               continue
@@ -94,23 +105,35 @@ setup-env () {
       continue
     fi
 
-    working_dir=$TMP_DIR/${today}-${service}
-
     # create working directory
-    mkdir -p $working_dir
+    rm -rf $TMP_DIR/$PACKAGE
+    mkdir -p $WORKDIR
+    mkdir -p $DESTDIR
 
     # start setup process
     (
-      cd $working_dir
-      for url in $files; do
+      cd $WORKDIR
+      for url in $FILES; do
         file=`basename $url`;
-        cp $PKG_DIR/$service/$file .
+        ARCHIVE+=($DISTDIR/$file)
       done
-      setup
+      # start unpacking
+
+      env_begin "Unpacking fetched sources ..."
+      unpack && env_end || exit 1
+
+      env_begin "Setting up ${PACKAGE} ..."
+      setup && env_end || exit 1
+
+      env_begin "Install ${PACKAGE} ..."
+      cd $DESTDIR
+      cp -a . $ROOT_DIR && env_end || env_fail
     )
+    env_begin "Removing temporary files ..."
     # cleanup
     cd $ROOT_DIR
-    rm -rf $working_dir
+    rm -rf $TMP_DIR/$PACKAGE
+    env_end
   done
 }
 

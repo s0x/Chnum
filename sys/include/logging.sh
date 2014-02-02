@@ -79,7 +79,7 @@ env_try() {
   #echo $log
   if [[ $log ]]; then
     log_error "${log}"
-    return 1;
+    return 1
   fi
 }
 

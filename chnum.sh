@@ -10,10 +10,10 @@ SETUP_DIR=$SYS_DIR/setup.d
 ENV_DIR=$SYS_DIR/env.d
 CFG_DIR=$SYS_DIR/conf.d
 TMP_DIR=$SYS_DIR/tmp
-PKG_DIR=$SYS_DIR/cache/files
+PKG_DIR=$SYS_DIR/cache/pkg
 LOG_DIR=$SYS_DIR/log
 
-today=(date +"%Y%m%d%H%M")
+today=$(date +"%Y%m%d%H%M")
 LOG_FILE=$LOG_DIR/env_$today.log
 
 export PATH=$PATH:$ROOT_DIR/bin:$ROOT_DIR/usr/bin
