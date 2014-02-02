@@ -14,3 +14,12 @@ Clone the repo into your home directory and add the following line to your .bash
 ```shell
 . ${HOME}/Chnum/chnum.sh
 ```
+
+Setup
+=====
+
+Setup your local environment with all packages placed in the setup.d directory by calling
+
+```shell
+setup-env
+```
