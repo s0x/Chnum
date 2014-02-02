@@ -23,12 +23,11 @@ check-files() {
     log_ok
   fi
 
-  [[ -n $3 ]] || echo "WARNING: sha1sum was not provided. Skipped check!"
+  [[ -n $3 ]] || log_warn "WARNING: sha1sum was not provided. Skipped check!"
   if [[ -n $3 ]]; then
     log_item "Checking sha1 ..."
     sha1=($(sha1sum ${1}))
     if [[ $sha1 != $3 ]]; then
-      log_error
       log_error " ERROR: sha1 doesnt match. The file might be corrupt"
       return 1
     fi
@@ -38,7 +37,7 @@ check-files() {
 }
 
 setup-env () {
-  echo "Seting-Up Fake Environment"
+  log_info "Seting-Up Fake Environment ..."
   for service in $(ls $SETUP_DIR); do
     include $CFG_DIR/${service}.conf
     if ! include $SETUP_DIR/${service}/${service}.setup; then
