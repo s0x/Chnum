@@ -5,6 +5,7 @@
 ROOT_DIR=$HOME/chnum
 
 SYS_DIR=$ROOT_DIR/sys
+INC_DIR=$SYS_DIR/include
 SETUP_DIR=$SYS_DIR/setup.d
 ENV_DIR=$SYS_DIR/env.d
 CFG_DIR=$SYS_DIR/conf.d
@@ -45,7 +46,7 @@ include() {
   source $1
 }
 
-include $ROOT_DIR/include/logging.sh
+include $INC_DIR/logging.sh
 
 confirm() {
   while true; do
