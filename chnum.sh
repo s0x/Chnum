@@ -45,39 +45,7 @@ include() {
   source $1
 }
 
-log_msg() {
-  MSG=$1
-  printf "%s" "$MSG"
-}
-
-log_ok() {
-  GREEN=$(tput setaf 2)
-  NORMAL=$(tput sgr0)
-  [[ -z $1 ]] || log_msg "${1}"
-  let COL=$(tput cols)-${#MSG}+${#GREEN}+${#NORMAL}
-
-  printf "%${COL}s\n" "$GREEN[OK]$NORMAL"
-}
-
-log_warn() {
-  YELLOW=$(tput setaf 3)
-  NORMAL=$(tput sgr0)
-  [[ -z $1 ]] || log_msg "${1}"
-  let COL=$(tput cols)-${#MSG}+${#YELLOW}+${#NORMAL}
-
-  printf "%${COL}s\n" "$YELLOW[WARN]$NORMAL"
-
-}
-
-log_error() {
-  BOLD=$(tput bold)
-  RED=$(tput setaf 1)
-  NORMAL=$(tput sgr0)
-  [[ -z $1 ]] || log_msg "${1}"
-  let COL=$(tput cols)-${#MSG}+${#BOLD}+${#RED}+${#NORMAL}
-
-  printf "%${COL}s\n" "$BOLD$RED[!!]$NORMAL"
-}
+include $ROOT_DIR/include/logging.sh
 
 confirm() {
   while true; do
@@ -90,18 +58,6 @@ confirm() {
   done
 }
 
-env_begin() {
-  log_msg $1
-}
-
-env_fail() {
-  log_error
-}
-
-env_end() {
-  log_ok
-}
-
 #
 # Check md5 and/or sha1 sum of file 
 # @param file
@@ -111,10 +67,9 @@ env_end() {
 check-files() {
   [[ -n $2 ]] || log_warn "WARNING: md5sum was not provided. Skipped check!"
   if [[ -n $2 ]]; then
-    log_msg "Checking md5 ..."
+    log_item "Checking md5 ..."
     md5=($(md5sum ${1}))
     if [[ $md5 != $2 ]]; then
-      log_error
       log_error " ERROR: md5 doesnt match. The file might be corrupt"
       return 1
     fi
@@ -123,7 +78,7 @@ check-files() {
 
   [[ -n $3 ]] || echo "WARNING: sha1sum was not provided. Skipped check!"
   if [[ -n $3 ]]; then
-    log_msg "Checking sha1 ..."
+    log_item "Checking sha1 ..."
     sha1=($(sha1sum ${1}))
     if [[ $sha1 != $3 ]]; then
       log_error
@@ -172,7 +127,7 @@ setup-env () {
 
           # Checking File
           [ -f $file ] || return 1
-          echo "Checking checksums ..."
+          log_item "Checking checksums ..."
           if [[ -z $md5[$idx] || -z $sha1[$idx] ]]; then
             log_warn "WARNING: md5 and sha1 should be provided to prevent using corrupted or manipulated files"
           fi
