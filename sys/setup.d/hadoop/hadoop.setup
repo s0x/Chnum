@@ -1,0 +1,28 @@
+#!/bin/bash
+#
+#
+
+files=(
+  "http://apache.imsam.info/hadoop/common/stable/hadoop-2.2.0.tar.gz"
+)
+
+md5=(
+  "25f27eb0b5617e47c032319c0bfd9962"
+)
+
+sha1=(
+  "7339da348d9b4a813b1b1d8b6982f3f8755329e4"
+)
+
+setup() {
+  env_begin "Installing hadoop"
+
+  tar -xzf hadoop-2.2.0.tar.gz
+
+  env_end
+}
+
+clean() {
+  echo "Clean"
+}
+
