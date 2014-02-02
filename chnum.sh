@@ -6,15 +6,20 @@ ROOT_DIR=$HOME/chnum
 
 SYS_DIR=$ROOT_DIR/sys
 INC_DIR=$SYS_DIR/include
-SETUP_DIR=$SYS_DIR/setup.d
-ENV_DIR=$SYS_DIR/env.d
-CFG_DIR=$SYS_DIR/conf.d
-TMP_DIR=$SYS_DIR/tmp
-PKG_DIR=$SYS_DIR/cache/pkg
-LOG_DIR=$SYS_DIR/log
+ENV_DIR=$ROOT_DIR/etc/env.d
+CFG_DIR=$ROOT_DIR/etc/conf.d
+REPO_DIR=$ROOT_DIR/usr/chnum/repos
+TMP_DIR=$ROOT_DIR/tmp
+PKG_DIR=$ROOT_DIR/var/cache/chnum
+LOG_DIR=$ROOT_DIR/var/log/chnum
+
+mkdir -p $ENV_DIR
+mkdir -p $CFG_DIR
+mkdir -p $REPO_DIR
 
 today=$(date +"%Y%m%d%H%M")
-LOG_FILE=$LOG_DIR/env_$today.log
+
+LOG_FILE=$LOG_DIR/chnum.${today}.log
 
 export PATH=$PATH:$ROOT_DIR/bin:$ROOT_DIR/usr/bin
 
@@ -37,7 +42,7 @@ HOME=$REAL_HOME
 unset REAL_HOME
 
 # setup fake environment entries
-for i in $(ls $ENV_DIR/*.env); do
+for i in $(ls $ENV_DIR/*.env 2> /dev/null); do
   source $i
 done;
 

@@ -42,105 +42,110 @@ fn_exists() {
 
 setup-env () {
   log_info "Seting-Up Fake Environment ..."
-  for service in $(ls $SETUP_DIR); do
-    # Setup variables
-    PACKAGE=$service
-    DISTDIR=$PKG_DIR/$PACKAGE
-    WORKDIR=$TMP_DIR/${PACKAGE}/work
-    DESTDIR=$TMP_DIR/${PACKAGE}/image
-    ARCHIVE=()
+  for repo in $(ls $REPO_DIR/); do
+    [[ -d $REPO_DIR/$repo ]] || continue
+    repo=$REPO_DIR/$repo
+    for service in $(ls $repo); do
+      [[ -d $repo/$service ]] || continue
+      # Setup variables
+      PACKAGE=$service
+      DISTDIR=$PKG_DIR/$PACKAGE
+      WORKDIR=$TMP_DIR/${PACKAGE}/work
+      DESTDIR=$TMP_DIR/${PACKAGE}/image
+      ARCHIVE=()
 
-    include $CFG_DIR/${service}.conf
-    if ! include $SETUP_DIR/${service}/${service}.setup; then
-      log_error "${service} skipped. The file ${service}.setup was not found."
-      break
-    fi
+      include $CFG_DIR/${service}.conf
+      if ! include $repo/${service}/${service}.setup; then
+        log_error "${service} skipped. The file ${service}.setup was not found."
+        break
+      fi
 
-    # create package directory
-    mkdir -p $DISTDIR
+      # create package directory
+      mkdir -p $DISTDIR
 
-    # fetch all needed files
-    if ! (
-      cd $DISTDIR
+      # fetch all needed files
+      if ! (
+        cd $DISTDIR
 
-      for idx in "${!FILES[@]}"; do
-        file=`basename ${FILES[$idx]}`
+        for idx in "${!FILES[@]}"; do
+          file=`basename ${FILES[$idx]}`
 
-        while true; do
+          while true; do
 
-          # Download file
-          while [ ! -f $file ]; do
-            log_item "Downloading ${FILES[$idx]} ..."
+            # Download file
+            while [ ! -f $file ]; do
+              log_item "Downloading ${FILES[$idx]} ..."
 
-            if fn_exists "fetch"; then
-              # custom fetch function
-              fetch
-            else
-              # default fetch
-              if ! wget ${FILES[$idx]}; then
-                log_error "ERROR: Downloading ${file} failed."
-                if confirm "Retry?"; then
-                  continue
-                fi
+              if fn_exists "fetch"; then
+                # custom fetch function
+                fetch
               else
-                log_ok "Downloading ${file} finished successfully."
+                # default fetch
+                if ! wget ${FILES[$idx]}; then
+                  log_error "ERROR: Downloading ${file} failed."
+                  if confirm "Retry?"; then
+                    continue
+                  fi
+                else
+                  log_ok "Downloading ${file} finished successfully."
+                fi
+              fi
+              break;
+            done
+
+            # Checking File
+            [ -f $file ] || return 1
+            log_item "Checking checksums ..."
+            if [[ -z $MD5[$idx] || -z $SHA1[$idx] ]]; then
+              log_warn "WARNING: md5 and sha1 should be provided to prevent using corrupted or manipulated files"
+            fi
+            if ! check-files $file ${MD5[$idx]} ${SHA1[$idx]}; then
+              if confirm "Retry downloading the file ${file}?"; then
+                rm $file
+                continue
+              else
+                return 1
               fi
             fi
-            break;
+            break
           done
 
-          # Checking File
-          [ -f $file ] || return 1
-          log_item "Checking checksums ..."
-          if [[ -z $MD5[$idx] || -z $SHA1[$idx] ]]; then
-            log_warn "WARNING: md5 and sha1 should be provided to prevent using corrupted or manipulated files"
-          fi
-          if ! check-files $file ${MD5[$idx]} ${SHA1[$idx]}; then
-            if confirm "Retry downloading the file ${file}?"; then
-              rm $file
-              continue
-            else
-              return 1
-            fi
-          fi
-          break
         done
+      ); then
+        log_error "ERROR: Not able to collect all needed files"
+        continue
+      fi
 
-      done
-    ); then
-      log_error "ERROR: Not able to collect all needed files"
-      continue
-    fi
+      # create working directory
+      rm -rf $TMP_DIR/$PACKAGE
+      mkdir -p $WORKDIR
+      mkdir -p $DESTDIR
 
-    # create working directory
-    rm -rf $TMP_DIR/$PACKAGE
-    mkdir -p $WORKDIR
-    mkdir -p $DESTDIR
+      # start setup process
+      (
+        cd $WORKDIR
+        for url in $FILES; do
+          file=`basename $url`;
+          ARCHIVE+=($DISTDIR/$file)
+        done
+        # start unpacking
 
-    # start setup process
-    (
-      cd $WORKDIR
-      for url in $FILES; do
-        file=`basename $url`;
-        ARCHIVE+=($DISTDIR/$file)
-      done
-      # start unpacking
+        env_begin "Unpacking fetched sources ..."
+        unpack && env_end || exit 1
 
-      env_begin "Unpacking fetched sources ..."
-      unpack && env_end || exit 1
+        env_begin "Setting up ${PACKAGE} ..."
+        setup && env_end || exit 1
 
-      env_begin "Setting up ${PACKAGE} ..."
-      setup && env_end || exit 1
-
-      env_begin "Install ${PACKAGE} ..."
-      cd $DESTDIR
-      cp -a . $ROOT_DIR && env_end || env_fail
-    )
-    env_begin "Removing temporary files ..."
-    # cleanup
-    cd $ROOT_DIR
-    rm -rf $TMP_DIR/$PACKAGE
-    env_end
+        env_begin "Install ${PACKAGE} ..."
+        cd $DESTDIR
+        cp -a . $ROOT_DIR && env_end || env_fail
+      )
+      env_begin "Removing temporary files ..."
+      # cleanup
+      cd $ROOT_DIR
+      rm -rf $TMP_DIR/$PACKAGE
+      env_end
+    done
   done
 }
 
