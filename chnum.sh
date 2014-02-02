@@ -40,6 +40,11 @@ for i in $(ls $ENV_DIR/*.env); do
   source $i
 done;
 
+include() {
+  [ -f $1 ] || return 1
+  source $1
+}
+
 log_msg() {
   MSG=$1
   printf "%s" "$MSG"
@@ -133,7 +138,8 @@ check-files() {
 setup-env () {
   echo "Seting-Up Fake Environment"
   for service in $(ls $SETUP_DIR); do
-    if [ ! -f $SETUP_DIR/${service}/${service}.setup ]; then
+    include $CFG_DIR/${service}.conf
+    if ! include $SETUP_DIR/${service}/${service}.setup; then
       log_error "${service} skipped. The file ${service}.setup was not found."
       break
     fi
@@ -144,8 +150,6 @@ setup-env () {
     # fetch all needed files
     if ! (
       cd $PKG_DIR/$service
-      [ -f $CFG_DIR/${service}.conf ] && source $CFG_DIR/${service}.conf
-      source $SETUP_DIR/${service}/${service}.setup
 
       for idx in "${!files[@]}"; do
         file=`basename ${files[$idx]}`
@@ -197,8 +201,6 @@ setup-env () {
     # start setup process
     (
       cd $working_dir
-      source $CFG_DIR/${service}.conf
-      source $SETUP_DIR/${service}/${service}.setup
       for url in $files; do
         file=`basename $url`;
         cp $PKG_DIR/$service/$file .
