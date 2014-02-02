@@ -3,6 +3,40 @@
 # This script provides all functions for setting up Chnum
 #
 
+
+#
+# Check md5 and/or sha1 sum of file 
+#
+# @param file
+# @param md5
+# @param sha1
+#
+check-files() {
+  [[ -n $2 ]] || log_warn "WARNING: md5sum was not provided. Skipped check!"
+  if [[ -n $2 ]]; then
+    log_item "Checking md5 ..."
+    md5=($(md5sum ${1}))
+    if [[ $md5 != $2 ]]; then
+      log_error " ERROR: md5 doesnt match. The file might be corrupt"
+      return 1
+    fi
+    log_ok
+  fi
+
+  [[ -n $3 ]] || echo "WARNING: sha1sum was not provided. Skipped check!"
+  if [[ -n $3 ]]; then
+    log_item "Checking sha1 ..."
+    sha1=($(sha1sum ${1}))
+    if [[ $sha1 != $3 ]]; then
+      log_error
+      log_error " ERROR: sha1 doesnt match. The file might be corrupt"
+      return 1
+    fi
+    log_ok
+  fi
+  return 0;
+}
+
 setup-env () {
   echo "Seting-Up Fake Environment"
   for service in $(ls $SETUP_DIR); do
