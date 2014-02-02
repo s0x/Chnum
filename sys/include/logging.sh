@@ -17,7 +17,7 @@ log_item() {
 } 
 
 log_msg() {
-  [[ -z $MSG ]] | printf "\n"
+  [[ ! $MSG ]] || printf "\n"
   let MSG_OFFSET=0
   MSG=$1
   printf "%s" "$MSG"
