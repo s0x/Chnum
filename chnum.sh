@@ -89,6 +89,14 @@ env_begin() {
   log_msg $1
 }
 
+env_fail() {
+  log_error
+}
+
+env_end() {
+  log_ok
+}
+
 #
 # Check md5 and/or sha1 sum of file 
 # @param file
