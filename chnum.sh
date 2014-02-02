@@ -132,7 +132,11 @@ check-files() {
 
 setup-env () {
   echo "Seting-Up Fake Environment"
-  for service in $(ls $SYS_DIR/setup.d/); do
+  for service in $(ls $SETUP_DIR); do
+    if [ ! -f $SETUP_DIR/${service}/${service}.setup ]; then
+      log_error "${service} skipped. The file ${service}.setup was not found."
+      break
+    fi
 
     # create package directory
     mkdir -p $PKG_DIR/$service
@@ -140,8 +144,8 @@ setup-env () {
     # fetch all needed files
     if ! (
       cd $PKG_DIR/$service
-      source $SYS_DIR/conf.d/${service}.conf
-      source $SYS_DIR/setup.d/${service}/${service}.setup
+      [ -f $CFG_DIR/${service}.conf ] && source $CFG_DIR/${service}.conf
+      source $SETUP_DIR/${service}/${service}.setup
 
       for idx in "${!files[@]}"; do
         file=`basename ${files[$idx]}`
@@ -193,8 +197,8 @@ setup-env () {
     # start setup process
     (
       cd $working_dir
-      source $SYS_DIR/conf.d/${service}.conf
-      source $SYS_DIR/setup.d/${service}/${service}.setup
+      source $CFG_DIR/${service}.conf
+      source $SETUP_DIR/${service}/${service}.setup
       for url in $files; do
         file=`basename $url`;
         cp $PKG_DIR/$service/$file .
