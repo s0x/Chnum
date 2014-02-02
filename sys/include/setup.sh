@@ -37,7 +37,7 @@ check-files() {
 }
 
 fn_exists() {
-  type $1 | grep -q 'shell function'
+  type -t $1 | grep -q '^function$'
 }
 
 setup-env () {
@@ -71,13 +71,20 @@ setup-env () {
           # Download file
           while [ ! -f $file ]; do
             log_item "Downloading ${FILES[$idx]} ..."
-            if ! wget ${FILES[$idx]}; then
-              log_error "ERROR: Downloading ${file} failed."
-              if confirm "Retry?"; then
-                continue
-              fi
+
+            if fn_exists "fetch"; then
+              # custom fetch function
+              fetch
             else
-              log_ok "Downloading ${file} finished successfully."
+              # default fetch
+              if ! wget ${FILES[$idx]}; then
+                log_error "ERROR: Downloading ${file} failed."
+                if confirm "Retry?"; then
+                  continue
+                fi
+              else
+                log_ok "Downloading ${file} finished successfully."
+              fi
             fi
             break;
           done
