@@ -2,16 +2,16 @@
 #
 # Bash script to initialize the local fake environment
 
-ROOT_DIR=$HOME/chnum
+CHNUM_HOME=$HOME/chnum
 
-SYS_DIR=$ROOT_DIR/sys
+SYS_DIR=$CHNUM_HOME/sys
 INC_DIR=$SYS_DIR/include
-ENV_DIR=$ROOT_DIR/etc/env.d
-CFG_DIR=$ROOT_DIR/etc/conf.d
-REPO_DIR=$ROOT_DIR/usr/chnum/repos
-TMP_DIR=$ROOT_DIR/tmp
-PKG_DIR=$ROOT_DIR/var/cache/chnum
-LOG_DIR=$ROOT_DIR/var/log/chnum
+ENV_DIR=$CHNUM_HOME/etc/env.d
+CFG_DIR=$CHNUM_HOME/etc/conf.d
+REPO_DIR=$CHNUM_HOME/usr/chnum/repos
+TMP_DIR=$CHNUM_HOME/tmp
+PKG_DIR=$CHNUM_HOME/var/cache/chnum
+LOG_DIR=$CHNUM_HOME/var/log/chnum
 
 mkdir -p $ENV_DIR
 mkdir -p $CFG_DIR
@@ -21,13 +21,13 @@ today=$(date +"%Y%m%d%H%M")
 
 LOG_FILE=$LOG_DIR/chnum.${today}.log
 
-export PATH=$PATH:$ROOT_DIR/bin:$ROOT_DIR/usr/bin
+export PATH=$PATH:$CHNUM_HOME/bin:$CHNUM_HOME/usr/bin
 
 REAL_HOME=$HOME
 # search for local home directories
-for i in $(ls $ROOT_DIR/home); do
+for i in $(ls $CHNUM_HOME/home); do
   # temporary change home directory
-  HOME=$ROOT_DIR/home/$i
+  HOME=$CHNUM_HOME/home/$i
 
   # Add bin directory
   if [[ -d $HOME/bin ]]; then
@@ -42,7 +42,8 @@ HOME=$REAL_HOME
 unset REAL_HOME
 
 # setup fake environment entries
-for i in $(ls $ENV_DIR/*.env 2> /dev/null); do
+for i in $(ls $ENV_DIR); do
+  [[ ${i##*.} == "env" ]] || continue
   source $i
 done;
 
