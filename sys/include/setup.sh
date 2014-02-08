@@ -3,6 +3,7 @@
 # This script provides all functions for setting up Chnum
 #
 
+include logging.sh || exit 1
 
 #
 # Check md5 and/or sha1 sum of file 
@@ -10,7 +11,6 @@
 # @param file
 # @param md5
 # @param sha1
-#
 check-files() {
   [[ -n $2 ]] || log_warn "WARNING: md5sum was not provided. Skipped check!"
   if [[ -n $2 ]]; then
@@ -43,20 +43,25 @@ fn_exists() {
 setup-env () {
   log_info "Seting-Up Fake Environment ..."
   for repo in $(ls $REPO_DIR/); do
-    [[ -d $REPO_DIR/$repo ]] || continue
-    repo=$REPO_DIR/$repo
-    for service in $(ls $repo); do
-      [[ -d $repo/$service ]] || continue
+    repo_path=$REPO_DIR/$repo
+    [[ -d $repo_path ]] || continue
+    log_info "Browse repo ${repo} ..."
+
+    for package in $(ls $repo_path); do
+      package_path=$repo_path/$package
+      [[ -d $package_path ]] || continue
+      log_info "Setup package ${package} ..."
+
       # Setup variables
-      PACKAGE=$service
+      PACKAGE=$package
       DISTDIR=$PKG_DIR/$PACKAGE
-      WORKDIR=$TMP_DIR/${PACKAGE}/work
-      DESTDIR=$TMP_DIR/${PACKAGE}/image
+      WORKDIR=$TMP_DIR/$PACKAGE/work
+      DESTDIR=$TMP_DIR/$PACKAGE/image
       ARCHIVE=()
 
-      include $CFG_DIR/${service}.conf
-      if ! include $repo/${service}/${service}.setup; then
-        log_error "${service} skipped. The file ${service}.setup was not found."
+      #include $CFG_DIR/${package}.conf
+      if ! include $package_path/${package}.setup; then
+        log_error "${package} skipped. The file ${package}.setup was not found."
         break
       fi
 

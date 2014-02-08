@@ -1,0 +1,62 @@
+#!/bin/bash
+#
+# Manage chnum environment
+#
+[[ $CHNUM_HOME ]] || {
+cat 1>&2 <<EOF
+chnum: Couldn't find \$CHNUM_HOME
+ Please make sure chnum.sh is sourced.
+ You might add the following line to your .bashrc:
+ source /path/to/chnum.sh
+EOF
+exit 1
+}
+sys_bin="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+source $CHNUM_HOME/sys/env.d/chnum.env
+source $CHNUM_INC/chnum.sh
+
+help() {
+cat <<EOF
+Usage: chnum <command> ...
+  
+Available commands are:
+  help    Display help
+  init    Initialize chnum environment
+  status  Show status of the active chnum environment
+EOF
+}
+
+init() {
+  include setup.sh
+
+  mkdir -p $ENV_DIR
+  mkdir -p $CFG_DIR
+  mkdir -p $REPO_DIR
+
+  setup-env
+}
+
+status() {
+  echo "Show status"
+}
+
+#
+# Command handling
+#
+case $1 in
+  status)
+    $@
+    ;;
+  init)
+    $@
+    ;;
+  help)
+    help
+    ;;
+  *)
+    echo "Invalid command"
+    help 
+    exit 1
+    ;;
+esac

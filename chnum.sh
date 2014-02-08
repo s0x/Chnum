@@ -2,26 +2,9 @@
 #
 # Bash script to initialize the local fake environment
 
-CHNUM_HOME=$HOME/chnum
+export CHNUM_HOME=$HOME/chnum
 
-SYS_DIR=$CHNUM_HOME/sys
-INC_DIR=$SYS_DIR/include
-ENV_DIR=$CHNUM_HOME/etc/env.d
-CFG_DIR=$CHNUM_HOME/etc/conf.d
-REPO_DIR=$CHNUM_HOME/usr/chnum/repos
-TMP_DIR=$CHNUM_HOME/tmp
-PKG_DIR=$CHNUM_HOME/var/cache/chnum
-LOG_DIR=$CHNUM_HOME/var/log/chnum
-
-mkdir -p $ENV_DIR
-mkdir -p $CFG_DIR
-mkdir -p $REPO_DIR
-
-today=$(date +"%Y%m%d%H%M")
-
-LOG_FILE=$LOG_DIR/chnum.${today}.log
-
-export PATH=$PATH:$CHNUM_HOME/bin:$CHNUM_HOME/usr/bin
+export PATH=$PATH:$CHNUM_HOME/sys/bin:$CHNUM_HOME/usr/bin
 
 REAL_HOME=$HOME
 # search for local home directories
@@ -41,19 +24,11 @@ done
 HOME=$REAL_HOME
 unset REAL_HOME
 
-# setup fake environment entries
-for i in $(ls $ENV_DIR); do
+# load all environment files
+for i in $(ls $CHNUM_HOME/etc/env.d/); do
   [[ ${i##*.} == "env" ]] || continue
-  source $i
+  source $CHNUM_HOME/etc/env.d/$i
 done;
-
-include() {
-  [ -f $1 ] || return 1
-  source $1
-}
-
-include $INC_DIR/logging.sh
-include $INC_DIR/setup.sh
 
 confirm() {
   while true; do
@@ -65,4 +40,3 @@ confirm() {
     esac
   done
 }
-
