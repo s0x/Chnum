@@ -2,39 +2,75 @@
 #
 # Manage chnum environment
 #
+sys_bin="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+is_chnum=0
+
 [[ $CHNUM_HOME ]] || {
+  is_chnum=1
 cat 1>&2 <<EOF
 chnum: Couldn't find \$CHNUM_HOME
  Please make sure chnum.sh is sourced.
  You might add the following line to your .bashrc:
  source /path/to/chnum.sh
 EOF
-exit 1
 }
-sys_bin="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-source $CHNUM_HOME/sys/env.d/chnum.env
-source $CHNUM_INC/chnum.sh
+chnum_includes() {
+  source $CHNUM_HOME/sys/env.d/chnum.env
+  source $CHNUM_INC/chnum.sh
+}
 
 help() {
 cat <<EOF
 Usage: chnum <command> ...
   
 Available commands are:
-  help    Display help
-  init    Initialize chnum environment
-  status  Show status of the active chnum environment
+  help        Display help
+  init        Initialize chnum environment
+  install     Install new packages
+  status      Show status of the active chnum environment
 EOF
 }
 
 init() {
+  [[ ! $is_chnum ]] || {
+    chnum_includes
+    include logging.sh
+    log_warn "Trying to initialize an already existing environment."
+    log_warn "This may cause potentially data loss."
+    while true; do
+      read -p "Would you like to reinitialize the environment? [Yes/No] " yn
+
+      case $yn in
+        [yY] | [yY][eE][sS] )
+          break
+          ;;
+        [nN] | [nN][oO] )
+          exit 0
+          ;;
+      esac    # --- end of case ---
+    done
+  }
+  mkdir -p $ENV_DIR
+  mkdir -p $CFG_DIR
+  mkdir -p $REPO_DIR
+}
+
+install() {
+  chnum_includes
   include setup.sh
 
   mkdir -p $ENV_DIR
   mkdir -p $CFG_DIR
   mkdir -p $REPO_DIR
 
-  setup-env
+  if [[ $# = 0 ]]; then
+    log_error "Invalid number of arguments: found $#, required 1"
+    log_error "Please provide a package name which shall be installed"
+    exit 1
+  fi;
+  setup-env $1
 }
 
 status() {
@@ -49,6 +85,9 @@ case $1 in
     $@
     ;;
   init)
+    $@
+    ;;
+  install)
     $@
     ;;
   help)
